@@ -28,6 +28,8 @@ export class AppComponent {
   ingredientFilter = '';
   effectFilters: string[] = [];
   formOpen = false;
+  editingId: string | null = null;
+  private formOpener?: HTMLElement;
   theme: Theme = 'system';
   draftIngredients: RecipeIngredient[] = [];
   draftEffects: RecipeEffect[] = [];
@@ -70,16 +72,19 @@ export class AppComponent {
     return recipe.ingredients.reduce((sum, item) => sum + item.amountKg, 0);
   }
 
-  openForm(): void {
-    this.draftIngredients = [{ herbId: '', amountKg: null as unknown as number }, { herbId: '', amountKg: null as unknown as number }];
-    this.draftEffects = [{ effectId: '', strength: null as unknown as number }];
+  openForm(recipe?: AlchemyRecipe, opener?: HTMLElement): void {
+    this.editingId = recipe?.id ?? null;
+    this.formOpener = opener;
+    this.draftIngredients = recipe ? recipe.ingredients.map(item => ({ ...item })) : [{ herbId: '', amountKg: 0.5 }, { herbId: '', amountKg: 0.5 }];
+    this.draftEffects = recipe ? recipe.effects.map(item => ({ ...item })) : [{ effectId: '', strength: null as unknown as number }];
     this.formError = '';
     this.formOpen = true;
   }
   closeForm(): void {
     this.formOpen = false;
     this.workspace?.nativeElement.removeAttribute('inert');
-    this.addRecipeButton?.nativeElement.focus();
+    if (this.formOpener?.isConnected && this.filteredRecipes.some(recipe => recipe.id === this.editingId)) this.formOpener.focus();
+    else this.addRecipeButton?.nativeElement.focus();
   }
   handleDialogKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') { event.preventDefault(); this.closeForm(); return; }
@@ -90,7 +95,7 @@ export class AppComponent {
     if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
   }
-  addIngredient(): void { this.draftIngredients.push({ herbId: '', amountKg: null as unknown as number }); }
+  addIngredient(): void { this.draftIngredients.push({ herbId: '', amountKg: 0.5 }); }
   removeIngredient(index: number): void { this.dialogElement?.querySelector<HTMLButtonElement>('.close-button')?.focus(); this.draftIngredients.splice(index, 1); }
   addEffect(): void { this.draftEffects.push({ effectId: '', strength: null as unknown as number }); }
   removeEffect(index: number): void { this.dialogElement?.querySelector<HTMLButtonElement>('.close-button')?.focus(); this.draftEffects.splice(index, 1); }
@@ -155,7 +160,7 @@ export class AppComponent {
 
   saveRecipe(): void {
     const recipe: AlchemyRecipe = {
-      id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`,
+      id: this.editingId ?? (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`),
       ingredients: this.draftIngredients, effects: this.draftEffects
     };
     try {

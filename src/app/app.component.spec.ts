@@ -18,6 +18,60 @@ describe('AppComponent', () => {
     expect(fixture.componentInstance.effects.length).toBe(12);
   });
 
+  it('defaults new ingredient amounts to 0.5 kg', () => {
+    const app = TestBed.createComponent(AppComponent).componentInstance;
+    app.openForm();
+    expect(app.draftIngredients.map(item => item.amountKg)).toEqual([0.5, 0.5]);
+    app.addIngredient();
+    expect(app.draftIngredients[2].amountKg).toBe(0.5);
+  });
+
+  it('edits a recipe without mutating it on cancel or duplicating it on save', () => {
+    const recipe = { id: 'one', ingredients: [{ herbId: 'herb-1', amountKg: 0.3 }, { herbId: 'herb-2', amountKg: 0.4 }], effects: [{ effectId: 'effect-1', strength: 1 }] };
+    const repository = new AlchemyRecipeRepository();
+    repository.save(recipe);
+    const fixture = TestBed.createComponent(AppComponent);
+    document.body.appendChild(fixture.nativeElement);
+    const app = fixture.componentInstance;
+    fixture.detectChanges();
+    const edit: HTMLButtonElement = fixture.nativeElement.querySelector('[aria-label^="Edit recipe"]');
+    edit.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#form-title').textContent).toContain('Edit recipe');
+    expect(app.draftIngredients[0].amountKg).toBe(0.3);
+    app.draftIngredients[0].amountKg = 0.2;
+    app.draftEffects[0].strength = 5;
+    app.closeForm();
+    expect(document.activeElement).toBe(edit);
+    expect(app.recipes[0]).toEqual(recipe);
+    expect(repository.list()).toEqual([recipe]);
+    fixture.detectChanges();
+    edit.click();
+    app.draftIngredients[0].amountKg = 0.2;
+    app.draftEffects[0].strength = 5;
+    app.saveRecipe();
+    expect(repository.list().length).toBe(1);
+    expect(repository.list()[0].id).toBe('one');
+    expect(repository.list()[0].ingredients[0].amountKg).toBe(0.2);
+    expect(repository.list()[0].effects[0].strength).toBe(5);
+    fixture.destroy();
+    fixture.nativeElement.remove();
+  });
+
+  it('keeps card editing keyboard accessible and deletion separate', () => {
+    const repository = new AlchemyRecipeRepository();
+    repository.save({ id: 'one', ingredients: [{ herbId: 'herb-1', amountKg: 0.5 }, { herbId: 'herb-2', amountKg: 0.5 }], effects: [{ effectId: 'effect-1', strength: 1 }] });
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const edit: HTMLButtonElement = fixture.nativeElement.querySelector('.recipe-card-edit');
+    expect(edit.type).toBe('button');
+    expect(edit.getAttribute('aria-label')).toContain('Edit recipe');
+    spyOn(window, 'confirm').and.returnValue(false);
+    fixture.nativeElement.querySelector('.delete-button').click();
+    expect(fixture.componentInstance.formOpen).toBeFalse();
+    expect(repository.list().length).toBe(1);
+  });
+
   it('keeps the add recipe card first and opens the form in empty and filtered journals', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
