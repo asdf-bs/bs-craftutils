@@ -1,0 +1,49 @@
+<div class="app-shell" [attr.data-theme]="theme">
+  <div #workspace class="workspace" [attr.inert]="formOpen ? '' : null">
+    <aside class="sidebar">
+      <div class="nav-item active"><span class="nav-icon">⚗</span><span>Alchemy<small>Potions & recipes</small></span><span class="nav-arrow">›</span></div>
+      <div class="nav-item muted"><span class="nav-icon">⚒</span><span>Crafting<small>Coming later</small></span><span class="soon">SOON</span></div>
+      <div class="theme-picker" role="group" aria-label="Theme">
+        <button type="button" (click)="setTheme('system')" [attr.aria-pressed]="theme === 'system'" aria-label="System theme" title="System theme"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 22h8M12 18v4"/></svg></button>
+        <button type="button" (click)="setTheme('light')" [attr.aria-pressed]="theme === 'light'" aria-label="Light theme" title="Light theme"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></button>
+        <button type="button" (click)="setTheme('dark')" [attr.aria-pressed]="theme === 'dark'" aria-label="Dark theme" title="Dark theme"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"/></svg></button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <h1 class="visually-hidden">Alchemy journal</h1>
+      @if (journalError) { <p class="form-error" role="alert">{{ journalError }}</p> }
+      <div class="summary-row"><div><span class="summary-icon">⚗</span><div><strong>{{ recipes.length }}</strong><small>RECIPES DISCOVERED</small></div></div><div class="summary-divider"></div><p>Your discoveries are saved in this browser <span>✧</span></p></div>
+
+      <section class="collection">
+        <div class="section-heading"><div class="journal-actions"><button class="outline-button" type="button" (click)="exportRecipes()">Export recipes</button><button class="outline-button" type="button" (click)="importInput.click()">Import recipes</button><input #importInput class="file-input" type="file" accept=".json,application/json" aria-label="Import recipes file" (change)="importRecipes(importInput)"><button class="reset-button" type="button" (click)="resetJournal()">Reset journal</button></div></div>
+        <div class="filters">
+          <label><span>FILTER BY INGREDIENT</span><select #ingredientFilterControl [(ngModel)]="ingredientFilter"><option value="">All ingredients</option>@for (herb of herbs; track herb.id) { <option [value]="herb.id">{{ herb.name }}</option> }</select></label>
+          <div class="effect-filter"><span class="effect-filter-label" id="effect-filter-label">FILTER BY EFFECT</span><details #effectDropdown (keydown)="closeEffectDropdownOnEscape($event)"><summary aria-labelledby="effect-filter-label effect-filter-value"><span id="effect-filter-value">{{ effectFilters.length ? effectFilters.length + ' selected' : 'All effects' }}</span></summary><div class="effect-options"><p>Match all selected effects. Sorted by strength in list order.</p>@for (effect of effects; track effect.id) { <label><input type="checkbox" [checked]="effectFilters.includes(effect.id)" (change)="toggleEffectFilter(effect.id, $any($event.target).checked)">{{ effect.name }}</label> }</div></details></div>
+          <div class="selected-effects effect-list">@for (effect of effects; track effect.id) { @if (effectFilters.includes(effect.id)) { <span>{{ effect.name }} <button type="button" (click)="removeEffectFilter(effect.id)" [attr.aria-label]="'Remove ' + effect.name + ' filter'">×</button></span> } }</div>
+          @if (ingredientFilter || effectFilters.length) { <button class="clear-filter" type="button" (click)="clearFiltersFromButton()">Clear filters ×</button> }
+        </div>
+        <p class="visually-hidden" role="status">{{ filteredRecipes.length }} recipes found</p>
+        <div class="recipe-grid"><button #addRecipeButton class="add-recipe-card" type="button" (click)="openForm()"><span aria-hidden="true">＋</span> Add recipe</button>@for (recipe of filteredRecipes; track recipe.id) {
+            <article class="recipe-card"><div class="card-top"><div class="potion-icon" aria-hidden="true">⚗</div><button class="delete-button" type="button" (click)="deleteRecipe(recipe.id)" [attr.aria-label]="'Delete recipe with ' + herbName(recipe.ingredients[0].herbId) + ' and ' + herbName(recipe.ingredients[1].herbId)">×</button></div><div class="card-label">INGREDIENTS <span>{{ recipeTotal(recipe).toFixed(2) }} KG TOTAL</span></div><div class="ingredient-list">@for (ingredient of recipe.ingredients; track ingredient.herbId) { <div><span>{{ herbName(ingredient.herbId) }}</span><strong>{{ ingredient.amountKg.toFixed(2) }} kg</strong></div> }</div><div class="card-label effects-label">EFFECTS</div><div class="effect-list">@for (effect of recipe.effects; track effect.effectId) { <span>{{ effectName(effect.effectId) }} <b>{{ effect.strength }}</b></span> }</div></article>
+          }</div>
+        @if (filteredRecipes.length === 0) {
+          <div class="empty-state"><div class="empty-art"><span>✧</span><div>⚗</div><i>✦</i></div><h3>{{ recipes.length ? 'No recipes found' : 'Your journal awaits' }}</h3><p>{{ recipes.length ? 'Try a different ingredient or effect to find your recipes.' : 'The best discoveries start with a single experiment. Record your first recipe and let the journey begin.' }}</p></div>
+        }
+      </section>
+    </main>
+  </div>
+@if (formOpen) {
+  <div class="modal-backdrop" (click)="closeForm()"><section #recipeDialog class="modal" role="dialog" aria-modal="true" aria-labelledby="form-title" (keydown)="handleDialogKeydown($event)" (click)="$event.stopPropagation()"><div class="modal-header"><div><div class="eyebrow">A NEW DISCOVERY</div><h2 id="form-title">Record a recipe</h2><p>Add the ingredients and effects you discovered.</p></div><button class="close-button" type="button" aria-label="Close" (click)="closeForm()">×</button></div>
+    <form (ngSubmit)="saveRecipe()">
+      <div class="form-section-title"><div><strong>Ingredients</strong><small>Use at least two different herbs, up to 1.00 kg total.</small></div><span>{{ totalAmount.toFixed(2) }} / 1.00 kg</span></div>
+      @for (ingredient of draftIngredients; track $index; let i = $index) { <div class="form-row"><select [name]="'herb' + i" [(ngModel)]="ingredient.herbId" [attr.aria-label]="'Herb ' + (i + 1)" [attr.aria-describedby]="formError ? 'form-error' : null"><option value="">Select herb</option>@for (herb of herbs; track herb.id) { <option [value]="herb.id">{{ herb.name }}</option> }</select><div class="amount-input"><input type="number" [name]="'amount' + i" [(ngModel)]="ingredient.amountKg" min="0.01" max="1" step="0.01" placeholder="0.00" [attr.aria-label]="'Ingredient ' + (i + 1) + ' amount in kg'" [attr.aria-describedby]="formError ? 'form-error' : null"><span>kg</span></div><button class="remove-button" type="button" (click)="removeIngredient(i)" [attr.aria-label]="'Remove ingredient ' + (i + 1)">×</button></div> }
+      <button class="add-row" type="button" (click)="addIngredient()" [disabled]="draftIngredients.length >= 12">＋ Add ingredient</button>
+      <div class="form-section-title effect-title"><div><strong>Effects</strong><small>Add at least one effect and its strength.</small></div></div>
+      @for (effect of draftEffects; track $index; let i = $index) { <div class="form-row"><select [name]="'effect' + i" [(ngModel)]="effect.effectId" [attr.aria-label]="'Effect ' + (i + 1)" [attr.aria-describedby]="formError ? 'form-error' : null"><option value="">Select effect</option>@for (item of effects; track item.id) { <option [value]="item.id">{{ item.name }}</option> }</select><div class="amount-input"><input type="number" [name]="'strength' + i" [(ngModel)]="effect.strength" min="0" step="any" placeholder="Strength" [attr.aria-label]="'Effect ' + (i + 1) + ' strength'" [attr.aria-describedby]="formError ? 'form-error' : null"></div><button class="remove-button" type="button" (click)="removeEffect(i)" [attr.aria-label]="'Remove effect ' + (i + 1)">×</button></div> }
+      <button class="add-row" type="button" (click)="addEffect()" [disabled]="draftEffects.length >= 12">＋ Add effect</button>
+      @if (formError) { <p id="form-error" class="form-error" role="alert">{{ formError }}</p> }
+      <div class="modal-actions"><button class="cancel-button" type="button" (click)="closeForm()">Cancel</button><button class="primary-button" type="submit">Save recipe <span>↗</span></button></div>
+    </form></section></div>
+}
+</div>

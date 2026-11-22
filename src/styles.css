@@ -1,0 +1,108 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap');
+* { box-sizing: border-box; }
+body {
+  --page: #d7d2c8;
+  --surface: #edeae2;
+  --surface-raised: #e2ded5;
+  --surface-accent: #d3cbbb;
+  --border: #756e63;
+  --text: #292722;
+  --muted: #514b43;
+  --accent: #654819;
+  --accent-hover: #5b431e;
+  --accent-text: #fffaf0;
+  --gold: #654819;
+  --danger: #9e332b;
+  --focus: #765a2c;
+  --overlay: rgba(15, 25, 19, .65);
+  color-scheme: light;
+  margin: 0; background: var(--page); color: var(--text); font-family: 'DM Sans', sans-serif;
+}
+body:has(.app-shell[data-theme='dark']) {
+  --page: #090909;
+  --surface: #161616;
+  --surface-raised: #1b1b1b;
+  --surface-accent: #292723;
+  --border: #88837a;
+  --text: #e5dfd1;
+  --muted: #aaa59c;
+  --accent: #c6a466;
+  --accent-hover: #e0c48c;
+  --accent-text: #17130e;
+  --gold: #d6b77c;
+  --danger: #f0a29b;
+  --focus: #e0c48c;
+  --overlay: rgba(0, 0, 0, .75);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  body:not(:has(.app-shell[data-theme='light'])):not(:has(.app-shell[data-theme='dark'])) {
+    --page: #090909;
+    --surface: #161616;
+    --surface-raised: #1b1b1b;
+    --surface-accent: #292723;
+    --border: #88837a;
+    --text: #e5dfd1;
+    --muted: #aaa59c;
+    --accent: #c6a466;
+    --accent-hover: #e0c48c;
+    --accent-text: #17130e;
+    --gold: #d6b77c;
+    --danger: #f0a29b;
+    --focus: #e0c48c;
+    --overlay: rgba(0, 0, 0, .75);
+    color-scheme: dark;
+  }
+}
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .45; }
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid #000; outline-offset: 2px; box-shadow: 0 0 0 2px #fff; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* Compact, framed panels and muted gold details echo the game's interface. */
+body app-root .app-shell .workspace { min-height: 100vh; padding: 10px; gap: 10px; }
+body app-root .app-shell .sidebar { width: 220px; padding: 16px 8px; border: 1px solid var(--border); border-radius: 5px; display: flex; flex-direction: column; }
+body app-root .app-shell .nav-item { border-radius: 3px; padding: 10px; }
+body app-root .app-shell .nav-item.active { border: 1px solid var(--border); color: var(--gold); }
+body app-root .app-shell .main-content { flex: 1; width: auto; min-width: 0; padding: 20px 24px; margin: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; }
+body app-root .app-shell .modal h2, body app-root .app-shell .empty-state h3 { font-family: Georgia, serif; font-variant: small-caps; }
+body app-root .app-shell .summary-row, body app-root .app-shell .recipe-card, body app-root .app-shell .modal { border-radius: 4px; }
+body app-root .app-shell .collection { padding-top: 20px; }
+body app-root .app-shell .filters { padding: 16px 0; }
+body app-root .app-shell .empty-state { padding: 24px 10px; }
+body app-root .app-shell .recipe-grid { padding: 20px 0 0; }
+body app-root .app-shell .add-recipe-card { min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 20px; border: 1px dashed var(--border); border-radius: 4px; background: transparent; color: var(--muted); }
+body app-root .app-shell .add-recipe-card span { font-size: 30px; line-height: 1; }
+body app-root .app-shell .add-recipe-card:hover { border-color: var(--gold); background: var(--surface-accent); color: var(--gold); }
+body app-root .app-shell .section-heading { display: flex; justify-content: space-between; align-items: end; gap: 16px; }
+body app-root .app-shell .primary-button, body app-root .app-shell .outline-button, body app-root .app-shell .reset-button { border-radius: 3px; }
+body app-root .app-shell .theme-picker { display: inline-flex; align-self: center; margin: auto 0 0; gap: 0; padding: 2px; border-radius: 4px; background: var(--surface-raised); }
+body app-root .app-shell .theme-picker button { border: 1px solid transparent; border-radius: 3px; padding: 7px 10px; background: transparent; color: var(--muted); font-size: 11px; }
+body app-root .app-shell .theme-picker button:hover { color: var(--text); }
+body app-root .app-shell .theme-picker button[aria-pressed='true'] { background: var(--surface-accent); border-color: var(--border); color: var(--gold); }
+body app-root .app-shell .selected-effects { align-items: center; min-height: 40px; margin: 0; }
+body app-root .app-shell .selected-effects button { border: 0; background: transparent; color: inherit; padding: 0 0 0 4px; font-size: 15px; line-height: 1; }
+@media (max-width: 800px) {
+  body app-root .app-shell .sidebar { width: 60px; padding: 16px 5px; }
+  body app-root .app-shell .theme-picker { flex-direction: column; align-self: center; }
+  body app-root .app-shell .main-content { padding: 20px 18px; }
+}
+@media (max-width: 520px) {
+  body app-root .app-shell .workspace { padding: 6px; gap: 6px; }
+  body app-root .app-shell .workspace { flex-direction: column; }
+  body app-root .app-shell .sidebar { width: 100%; padding: 8px; }
+  body app-root .app-shell .theme-picker { flex-direction: row; margin: 8px 0 0; }
+  body app-root .app-shell .main-content { min-width: 0; padding: 16px 12px; }
+  body app-root .app-shell .section-heading { align-items: start; flex-wrap: wrap; }
+}
+
+body app-root .app-shell .theme-picker button { min-width: 44px; min-height: 44px; display: grid; place-items: center; }
+body app-root .app-shell .selected-effects button { min-width: 24px; min-height: 24px; padding: 0; }
+body app-root .app-shell .selected-effects { flex-wrap: wrap; min-width: 0; }
+body app-root .app-shell .theme-picker button { font-size: .875rem; }
+
+@media (forced-colors: active) {
+  button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid Highlight; box-shadow: none; }
+  body app-root .app-shell .theme-picker button[aria-pressed='true'] { border: 2px solid Highlight; color: Highlight; }
+}
