@@ -6,6 +6,7 @@ export interface Herb {
 export interface Effect {
   id: string;
   name: string;
+  description: string;
 }
 
 export interface RecipeIngredient {
@@ -27,12 +28,24 @@ export interface AlchemyRecipe {
 export const HERBS: readonly Herb[] = [
   'Bog arum', 'Bogbean', 'Cattail', 'Cottongrass', 'Marsh Cinqefoil', 'Marsh Marigold',
   'Marsh Tea', 'Meadowsweet', 'Sphagnum', 'Sundew', 'Sweetflag', 'Watermint',
+  'Sleep-grass', 'Break-grass', 'Weeping-grass',
 ].map((name, index) => ({ id: `herb-${index + 1}`, name }));
 
 export const EFFECTS: readonly Effect[] = [
-  'Growth', 'Shrink', 'Care', 'Stamina', 'Mana', 'Tough hide',
-  'Rage', 'Consciousness', 'Stretch', 'Protein', 'Light step', 'Focus',
-].map((name, index) => ({ id: `effect-${index + 1}`, name }));
+  { id: 'effect-1', name: 'Growth', description: 'Increases height; mass scales with the cube of the height factor.' },
+  { id: 'effect-2', name: 'Shrink', description: 'Decreases height.' },
+  { id: 'effect-3', name: 'Care', description: 'Regenerates health over time.' },
+  { id: 'effect-4', name: 'Stamina', description: 'Increases stamina replenishment.' },
+  { id: 'effect-5', name: 'Mana', description: 'Increases mana replenishment.' },
+  { id: 'effect-6', name: 'Tough hide', description: 'Reduces damage taken.' },
+  { id: 'effect-7', name: 'Rage', description: 'Increases damage dealt.' },
+  { id: 'effect-8', name: 'Consciousness', description: 'Adds to a reserve multiplier; the affected reserve is not specified.' },
+  { id: 'effect-9', name: 'Stretch', description: 'Raises the swallowing threshold.' },
+  { id: 'effect-10', name: 'Protein', description: 'Increases digested mass.' },
+  { id: 'effect-11', name: 'Light step', description: 'Improves overland travel; the exact measure is not specified.' },
+  { id: 'effect-12', name: 'Focus', description: 'Reduces the manufacturing bar or time; the exact effect is not specified.' },
+  { id: 'effect-13', name: 'Transformation', description: 'The exact effect is not specified.' }
+];
 
 export function validateRecipe(recipe: AlchemyRecipe): string[] {
   const errors: string[] = [];

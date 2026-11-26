@@ -1,0 +1,228 @@
+<section class="resources-workspace" aria-labelledby="resources-title">
+  <header class="workspace-heading">
+    <div>
+      <p class="eyebrow">FIELD NOTES · RESOURCE TRACKER</p>
+      <h1 id="resources-title">Resources</h1>
+      <p class="intro">Track resource nodes and plan gathering routes.</p>
+    </div>
+    <div class="node-count"><strong>{{ resourceNodes.length }}</strong><span>RECORDED NODES</span></div>
+  </header>
+
+  @if (storageError) {
+    <p class="notice error-notice" role="alert">{{ storageError }}</p>
+  }
+
+  <section class="panel add-panel" aria-labelledby="node-form-title">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">DISCOVERY LOG</p>
+        <h2 id="node-form-title">{{ editingKey ? 'Edit resource node' : 'Add a resource node' }}</h2>
+      </div>
+      <span class="quality-default">Default quality · 100</span>
+    </div>
+    <form class="node-form" (ngSubmit)="saveNode()">
+      <label>
+        <span>Resource type</span>
+        <select #resourceTypeField name="resourceType" [(ngModel)]="type" [disabled]="!!storageError">
+          @for (resource of catalog; track resource.id) {
+            <option [value]="resource.id">{{ resource.name }}{{ resource.aliases.length ? ' (' + resource.aliases.join(', ') + ')' : '' }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>q coordinate</span>
+        <input type="number" step="1" name="q" [(ngModel)]="q" [disabled]="!!storageError" required>
+      </label>
+      <label>
+        <span>r coordinate</span>
+        <input type="number" step="1" name="r" [(ngModel)]="r" [disabled]="!!storageError" required>
+      </label>
+      <label>
+        <span>Quality · 1–100</span>
+        <input type="number" min="1" max="100" step="1" name="quality" [(ngModel)]="quality" [disabled]="!!storageError" required>
+      </label>
+      <div class="form-buttons">
+        <button class="primary-button" type="submit" [disabled]="!!storageError">{{ editingKey ? 'Save changes' : 'Add node' }}</button>
+        @if (editingKey) { <button class="outline-button" type="button" (click)="cancelEdit()">Cancel</button> }
+      </div>
+    </form>
+    @if (formError) { <p class="notice error-notice" role="alert">{{ formError }}</p> }
+  </section>
+
+  <section class="panel discovery-panel" aria-labelledby="discovered-title">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">COLLECTION</p>
+        <h2 #discoveredTitle id="discovered-title" tabindex="-1">Discovered nodes</h2>
+      </div>
+      <div class="selection-actions">
+        <span>{{ selectedNodes.length }} selected</span>
+        <button type="button" class="outline-button" (click)="selectVisible()">Select visible</button>
+        <button type="button" class="outline-button" (click)="deselectVisible()">Deselect visible</button>
+        <button type="button" class="text-button" (click)="clearSelection()">Clear selection</button>
+      </div>
+    </div>
+
+    <div class="filters">
+      <details class="filter-dropdown">
+        <summary>Resource types <span>{{ selectedTypes.size }} / {{ catalog.length }}</span></summary>
+        <fieldset>
+          <legend>Filter by type</legend>
+          <div class="filter-bulk-actions">
+            <button type="button" class="text-button" (click)="selectAllTypes()">Select all</button>
+            <button type="button" class="text-button" (click)="deselectAllTypes()">Deselect all</button>
+          </div>
+          <div class="filter-options type-options">
+            @for (resource of catalog; track resource.id) {
+              <label>
+                <input type="checkbox" [checked]="selectedTypes.has(resource.id)" (change)="toggleType(resource.id, $any($event.target).checked)">
+                <span>{{ resource.name }}</span>
+              </label>
+            }
+          </div>
+        </fieldset>
+      </details>
+      <details class="filter-dropdown">
+        <summary>Quality <span>{{ selectedBands.size }} / {{ qualityFilters.length }}</span></summary>
+        <fieldset>
+          <legend>Filter by quality</legend>
+          <div class="filter-bulk-actions">
+            <button type="button" class="text-button" (click)="selectAllBands()">Select all</button>
+            <button type="button" class="text-button" (click)="deselectAllBands()">Deselect all</button>
+          </div>
+          <div class="filter-options quality-options">
+            @for (filter of qualityFilters; track filter.id) {
+              <label>
+                <input type="checkbox" [checked]="selectedBands.has(filter.id)" (change)="toggleBand(filter.id, $any($event.target).checked)">
+                <span class="quality-swatch quality-{{ filter.id }}">{{ filter.label }}</span>
+              </label>
+            }
+          </div>
+        </fieldset>
+      </details>
+    </div>
+
+    @if (filteredNodes.length) {
+      <div class="resource-grid">
+        @for (node of filteredNodes; track node.type + ':' + node.q + ':' + node.r) {
+          <article [class]="'resource-card ' + qualityClass(node) + (isSelected(node) ? ' is-selected' : '')" [attr.data-quality]="node.quality">
+            <div class="resource-card-top">
+              <label class="select-node">
+                <input type="checkbox" [checked]="isSelected(node)" (change)="toggleNode(node)" [attr.aria-label]="'Select ' + resourceName(node.type) + ' at q ' + node.q + ', r ' + node.r">
+                <span>Select</span>
+              </label>
+              <span class="quality-badge">{{ node.quality }} · {{ qualityLabel(node) }}</span>
+            </div>
+            <h3>{{ resourceName(node.type) }}</h3>
+            <div class="resource-card-bottom">
+              <p class="coordinates">q {{ node.q }} <span>·</span> r {{ node.r }}</p>
+              <div class="card-actions">
+                <button type="button" class="text-button" (click)="editNode(node)" [attr.aria-label]="'Edit ' + resourceName(node.type) + ' at q ' + node.q + ', r ' + node.r">Edit</button>
+                <button type="button" class="text-button danger-text" (click)="deleteNode(node)" [attr.aria-label]="'Remove ' + resourceName(node.type) + ' at q ' + node.q + ', r ' + node.r">Remove</button>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <span aria-hidden="true">⌖</span>
+        <h3>{{ resourceNodes.length ? 'No nodes match these filters' : 'No discoveries yet' }}</h3>
+        <p>{{ resourceNodes.length ? 'Adjust the selected types or quality bands to see more nodes.' : 'Add your first resource above, then select discoveries to share or route them.' }}</p>
+      </div>
+    }
+  </section>
+
+  <section class="panel route-panel" aria-labelledby="route-title">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">GATHERING PLAN</p>
+        <h2 id="route-title">Resource route planner</h2>
+      </div>
+      <span class="route-count">{{ selectedNodes.length }} target{{ selectedNodes.length === 1 ? '' : 's' }}</span>
+    </div>
+    <p class="model-note">Routes minimize straight-line hex distance; terrain, gathering, and return travel are not modeled. Allow {{ portalCooldownMinutes }} minutes between portal uses.</p>
+    <div class="route-controls">
+      <label><span>Start q</span><input type="number" step="1" name="startQ" [(ngModel)]="startQ"></label>
+      <label><span>Start r</span><input type="number" step="1" name="startR" [(ngModel)]="startR"></label>
+      <label class="portal-option"><input type="checkbox" name="usePortals" [(ngModel)]="usePortals"><span>Include portals</span></label>
+      @if (routeSearching) {
+        <button type="button" class="outline-button" (click)="cancelRoute()">Cancel search</button>
+      } @else {
+        <button type="button" class="primary-button" (click)="generateRoute()">Find route</button>
+      }
+    </div>
+    @if (routeWarning) { <p class="notice warning-notice">{{ routeWarning }}</p> }
+    @if (routeStatus) { <p class="route-status" role="status">{{ routeStatus }}</p> }
+    @if (routeError) { <p class="notice error-notice" role="alert">{{ routeError }}</p> }
+    @if (route) {
+      <div class="route-result">
+        <h3>{{ routeOptimal ? 'Optimal route' : 'Approximate route' }}</h3>
+        @if (routeSnapshot; as snapshot) {
+          <p class="model-note">{{ snapshot.targetCount }} targets · start q {{ snapshot.start.q }}, r {{ snapshot.start.r }} · portals {{ snapshot.usePortals ? 'on' : 'off' }}</p>
+        }
+        <div class="route-summary"><span>Total walking distance</span><strong>{{ route.totalDistance }} hexes</strong><small>{{ route.stops.length }} resource stops · {{ route.portals.length }} portal{{ route.portals.length === 1 ? '' : 's' }} used</small></div>
+        <ol class="route-stops" aria-label="Route steps">
+          @for (step of routeSteps; track $index) {
+            <li [class.portal-step]="step.kind === 'portal'">
+              <span class="stop-number">{{ $index + 1 }}</span>
+              @if (step.kind === 'portal') {
+                <div>
+                  <strong>Portal: {{ step.portal.from.name }} → {{ step.portal.to.name }}
+                    @if (step.portal.to.address; as address) {
+                      <button type="button" class="outline-button" (click)="copyPortalAddress(address, step.portal.to.name)" [attr.aria-label]="'Copy destination address for ' + step.portal.to.name">Copy address</button>
+                    }
+                  </strong>
+                  <small>Walk {{ step.distanceFromPrevious }} hexes to q {{ step.portal.from.q }}, r {{ step.portal.from.r }}.</small>
+                </div>
+                <p class="portal-detail">Exit at q {{ step.portal.to.q }}, r {{ step.portal.to.r }}.</p>
+                @if (step.portal.to.region && step.portal.to.possibleAddresses?.length) {
+                  <div class="portal-detail portal-address-candidates">
+                    <span>Possible {{ step.portal.to.region }} addresses (match unknown)</span>
+                    @for (address of step.portal.to.possibleAddresses; track address; let index = $index) {
+                      <button type="button" class="outline-button" (click)="copyPossiblePortalAddress(address, step.portal.to.region!)" [attr.aria-label]="'Copy possible ' + step.portal.to.region + ' destination address ' + (index + 1) + '; portal match unknown'">Copy address {{ index + 1 }}</button>
+                    }
+                  </div>
+                }
+              } @else {
+                <div>
+                  <strong>{{ resourceName(step.node.type) }}</strong>
+                  <small>q {{ step.node.q }}, r {{ step.node.r }} · quality {{ step.node.quality }} · {{ step.distanceFromPrevious }} hexes from {{ step.distanceOrigin }}</small>
+                </div>
+              }
+            </li>
+          }
+        </ol>
+      </div>
+    }
+    @if (portalCopyMessage) { <p class="route-status" role="status" aria-live="polite">{{ portalCopyMessage }}</p> }
+  </section>
+
+  <section class="panel share-panel" aria-labelledby="share-title">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">PLAYER-TO-PLAYER</p>
+        <h2 id="share-title">Share discoveries</h2>
+      </div>
+    </div>
+    <p class="model-note">Imports add new nodes and keep existing ones.</p>
+    <label class="share-label" for="resource-share-code">Resource share code</label>
+    <textarea id="resource-share-code" name="shareCode" [(ngModel)]="shareCode" rows="3" placeholder="Generate a code from selected nodes, or paste a code from another player"></textarea>
+    <div class="share-actions">
+      <button type="button" class="outline-button" (click)="createShareCode()" [disabled]="!selectedNodes.length">Create code from selection</button>
+      <button type="button" class="primary-button" (click)="importShareCode()" [disabled]="!!storageError">Import and merge</button>
+    </div>
+    <div class="raw-import">
+      <label class="share-label" for="raw-resource-text">Raw resource data</label>
+      <p class="model-note">Paste rows as “Name q r [quality]”, CSV, or grouped data such as “Flint: 80 (-12, 7), (8, -4); 100 (3, 5)”. Quality defaults to 100; grouped quality applies to each coordinate.</p>
+      <textarea id="raw-resource-text" name="rawResourceText" [(ngModel)]="rawResourceText" rows="4" placeholder="Hardwood -12 7&#10;Iron ore, 8, -4, 76" [disabled]="!!storageError"></textarea>
+      <div class="share-actions">
+        <button type="button" class="primary-button" (click)="importRawResources()" [disabled]="!!storageError">Import raw data</button>
+        <label class="file-input-label">Choose CSV or text file
+          <input type="file" accept=".csv,.txt,text/csv,text/plain" (change)="importRawFile($any($event.target).files?.[0] ?? null)" [disabled]="!!storageError">
+        </label>
+      </div>
+    </div>
+    @if (shareMessage) { <p class="route-status" role="status">{{ shareMessage }}</p> }
+  </section>
+</section>

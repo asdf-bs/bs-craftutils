@@ -15,6 +15,14 @@ body {
   --danger: #9e332b;
   --focus: #765a2c;
   --overlay: rgba(15, 25, 19, .65);
+  --quality-low-text: #633f27;
+  --quality-low-border: #c9a17f;
+  --quality-mid-text: #204e75;
+  --quality-mid-border: #8aafcf;
+  --quality-high-text: #705b14;
+  --quality-high-border: #cfbd6e;
+  --quality-perfect-text: #3e3850;
+  --quality-perfect-border: #b7a9d8;
   color-scheme: light;
   margin: 0; background: var(--page); color: var(--text); font-family: 'DM Sans', sans-serif;
 }
@@ -33,6 +41,14 @@ body:has(.app-shell[data-theme='dark']) {
   --danger: #f0a29b;
   --focus: #e0c48c;
   --overlay: rgba(0, 0, 0, .75);
+  --quality-low-text: #f2d9c4;
+  --quality-low-border: #987353;
+  --quality-mid-text: #d8edff;
+  --quality-mid-border: #4f83a8;
+  --quality-high-text: #fff0a8;
+  --quality-high-border: #9c8843;
+  --quality-perfect-text: #f4efff;
+  --quality-perfect-border: #e9e0ff;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: dark) {
@@ -51,14 +67,25 @@ body:has(.app-shell[data-theme='dark']) {
     --danger: #f0a29b;
     --focus: #e0c48c;
     --overlay: rgba(0, 0, 0, .75);
+    --quality-low-text: #f2d9c4;
+    --quality-low-border: #987353;
+    --quality-mid-text: #d8edff;
+    --quality-mid-border: #4f83a8;
+    --quality-high-text: #fff0a8;
+    --quality-high-border: #9c8843;
+    --quality-perfect-text: #f4efff;
+    --quality-perfect-border: #e9e0ff;
     color-scheme: dark;
   }
 }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .45; }
-button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid #000; outline-offset: 2px; box-shadow: 0 0 0 2px #fff; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible, summary:focus-visible, main:focus-visible, h2[tabindex="-1"]:focus { outline: 3px solid var(--focus); outline-offset: 2px; box-shadow: 0 0 0 2px var(--surface); }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@media (min-width: 521px) and (max-width: 800px) {
+  body app-root .app-shell .nav-item > span.nav-label { display: block; position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+}
 
 /* Compact, framed panels and muted gold details echo the game's interface. */
 body app-root .app-shell .workspace { min-height: 100vh; padding: 10px; gap: 10px; }
@@ -101,8 +128,12 @@ body app-root .app-shell .theme-picker button { min-width: 44px; min-height: 44p
 body app-root .app-shell .selected-effects button { min-width: 24px; min-height: 24px; padding: 0; }
 body app-root .app-shell .selected-effects { flex-wrap: wrap; min-width: 0; }
 body app-root .app-shell .theme-picker button { font-size: .875rem; }
+body app-root .app-shell .sidebar .nav-item { width: 100%; text-align: left; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; text-decoration: none; }
+body app-root .app-shell .sidebar .nav-item:hover:not(.muted) { background: var(--surface-accent); }
+body app-root .app-shell .sidebar .nav-item.active { background: var(--surface-accent); color: var(--gold); }
+body app-root .app-shell .sidebar .nav-item.active small { color: var(--muted); }
 
 @media (forced-colors: active) {
-  button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid Highlight; box-shadow: none; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible, summary:focus-visible, main:focus-visible, h2[tabindex="-1"]:focus { outline: 3px solid Highlight; box-shadow: none; }
   body app-root .app-shell .theme-picker button[aria-pressed='true'] { border: 2px solid Highlight; color: Highlight; }
 }

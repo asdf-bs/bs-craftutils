@@ -6,6 +6,7 @@
     "start": "ng serve",
     "build": "ng build",
     "package": "ng build --configuration production --base-href ./ && node scripts/prepare-file-build.cjs && rm -f dist/bs-crafttools.zip && cd dist/bs-crafttools/browser && zip -qr ../../bs-crafttools.zip .",
+    "test:package": "node --test scripts/prepare-file-build.test.cjs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

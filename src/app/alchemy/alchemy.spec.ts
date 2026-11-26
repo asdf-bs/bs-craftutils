@@ -1,4 +1,4 @@
-import { AlchemyRecipe, AlchemyRecipeRepository, validateRecipe } from './alchemy';
+import { AlchemyRecipe, AlchemyRecipeRepository, EFFECTS, validateRecipe } from './alchemy';
 
 function recipe(id: string, strength = 1): AlchemyRecipe {
   return {
@@ -9,6 +9,14 @@ function recipe(id: string, strength = 1): AlchemyRecipe {
 }
 
 describe('alchemy recipes', () => {
+  it('provides a description for every catalog effect', () => {
+    expect(EFFECTS.length).toBe(13);
+    expect(EFFECTS.every(effect => effect.description.trim().length > 0)).toBeTrue();
+    expect(EFFECTS.find(effect => effect.name === 'Consciousness')?.description).toContain('not specified');
+    expect(EFFECTS.find(effect => effect.name === 'Light step')?.description).toContain('not specified');
+    expect(EFFECTS.find(effect => effect.name === 'Focus')?.description).toContain('not specified');
+  });
+
   it('accepts positive hundredths up to a kilogram and rejects invalid amounts', () => {
     const item = recipe('one');
     expect(validateRecipe(item)).toEqual([]);

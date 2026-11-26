@@ -1,0 +1,162 @@
+<section class="estimator" aria-labelledby="alchemy-title">
+  <h1 class="page-title" id="alchemy-title">Alchemy</h1>
+  @if (storageError) { <p class="storage-error" role="alert">{{ storageError }}</p> }
+
+  <details class="notebook-section state-indicator">
+    <summary class="notebook-summary"><strong>Herb effects</strong><span>Saved in this browser.</span><small>{{ herbTables.length }} / {{ herbs.length }} tables started</small><span class="disclosure-state" aria-hidden="true"></span></summary>
+    <div class="herb-grid">
+      @for (herb of herbs; track herb.id) {
+        @let table = tableFor(herb.id);
+        <details class="herb-table">
+          <summary>{{ herb.name }} <span>{{ table.effects.length }} known effect{{ table.effects.length === 1 ? '' : 's' }}</span></summary>
+          <p>Record up to four effects. Unknown powers use a 0.50–1.00 range until measured.</p>
+          @for (row of tableEffectsForDisplay(herb.id); track row.index; let displayIndex = $index) {
+            <div class="effect-row">
+              <label>
+                <span>Known effect {{ displayIndex + 1 }}</span>
+                <select [ngModel]="row.effect.effectId" [ngModelOptions]="{standalone: true}" (ngModelChange)="setEffect(herb.id, row.index, $event)" [attr.aria-label]="'Known effect ' + (displayIndex + 1) + ' for ' + herb.name">
+                  <option value="">Select effect</option>
+                  @for (item of effects; track item.id) {
+                    <option [value]="item.id" [disabled]="isEffectSelected(herb.id, item.id, row.index)">{{ item.name }}</option>
+                  }
+                </select>
+              </label>
+            </div>
+          }
+          <label class="herb-quality">
+            <span>Herb quality for estimates (1–100)</span>
+            <input type="number" min="1" max="100" step="1" [ngModel]="table.herbQuality" [ngModelOptions]="{standalone: true}" (ngModelChange)="setHerbQuality(herb.id, $event)" [attr.aria-label]="'Herb quality for ' + herb.name">
+          </label>
+          <label class="complete-table">
+            <input type="checkbox" [checked]="table.effectsComplete" [disabled]="!canMarkComplete(table)" (change)="setComplete(herb.id, $any($event.target).checked)">
+            <span>All four effects are known</span>
+          </label>
+        </details>
+      }
+    </div>
+  </details>
+
+  <details class="experiment-section state-indicator">
+    <summary class="experiment-summary"><strong>Herb strength experiment</strong><span>Mix {{ dominantMassKg.toFixed(2) }} kg of one herb with 0.01 kg of each other herb; record mixture powers.</span><span class="disclosure-state" aria-hidden="true"></span></summary>
+    <div class="experiment-content">
+      <div class="experiment-controls">
+        <label><span>Dominant herb</span><select [ngModel]="experiment.dominantHerbId" [ngModelOptions]="{standalone: true}" (ngModelChange)="setExperimentHerb($event)">@for (herb of herbs; track herb.id) { <option [value]="herb.id">{{ herb.name }}</option> }</select></label>
+      </div>
+      <p class="experiment-note">Enter mixture power (%), not dose strength, to one decimal place. Leave absent effects blank; the list is assumed complete.</p>
+      <button class="outline-button" type="button" (click)="startNewExperiment()">Start a new experiment</button>
+      @for (effect of effects; track effect.id) {
+        <div class="effect-row experiment-row">
+          <label class="power-field"><span>{{ effect.name }} (%)</span><input type="number" min="0" max="100" step="0.1" placeholder="Not observed" [ngModel]="observedPower(effect.id)" [ngModelOptions]="{standalone: true}" (ngModelChange)="setEffectObservation(effect.id, $event)" [attr.aria-label]="'Observed mixture power percentage for ' + effect.name"></label>
+        </div>
+      }
+      <button class="primary-button experiment-button" type="button" (click)="recordExperiment()">Save experiment &amp; calculate power ranges</button>
+      @if (experimentErrors.length) { <ul class="estimate-errors" role="alert">@for (error of experimentErrors; track error) { <li>{{ error }}</li> }</ul> }
+      @if (experimentNotice) { <p class="experiment-notice" role="status">{{ experimentNotice }}</p> }
+      @if (experimentEstimates.length) {
+        <div class="experiment-results" aria-live="polite">
+          <h3>Conditional estimates for {{ herbName(experiment.dominantHerbId) }}</h3>
+          <p>Ranges account for recorded co-herb powers and incomplete tables, and assume the dominant herb carries each effect. The finder uses the midpoint.</p>
+          @for (estimate of experimentEstimates; track estimate.effectId) {
+            <div class="experiment-result"><span [attr.title]="effectDescription(estimate.effectId)">{{ effectName(estimate.effectId) }}</span><strong>{{ formatPercent(estimate.minPower) }}–{{ formatPercent(estimate.maxPower) }} <small>(midpoint {{ formatPercent(estimate.midpointPower) }})</small></strong></div>
+          }
+        </div>
+      }
+    </div>
+  </details>
+
+  <section class="finder-section" aria-labelledby="finder-title">
+    <div class="subsection-heading">
+      <div><h2 id="finder-title">Find a potion</h2><p>Choose effects for a 1 L dose. Exact matches contain only those effects; if none are found, include extra known effects. Each selected effect must reach 1% in at least one product. Results rank tested 1 kg batches brewed in 4 L of water by balance and strength.</p></div>
+    </div>
+    <fieldset class="desired-effects">
+      <legend>Desired effects</legend>
+      <div class="effect-choices">
+        @for (effect of effects; track effect.id) {
+          <label><input type="checkbox" [checked]="selectedEffectIds.includes(effect.id)" (change)="toggleDesiredEffect(effect.id, $any($event.target).checked)"><span [attr.title]="effectDescription(effect.id)">{{ effect.name }}</span></label>
+        }
+      </div>
+    </fieldset>
+
+    @if (showAdditionalEffectsOption) {
+      <label class="quality-toggle"><input type="checkbox" [ngModel]="includeAdditionalEffects" [ngModelOptions]="{standalone: true}" (ngModelChange)="setIncludeAdditionalEffects($event)" aria-label="Include potions with additional effects"><span>Include potions with additional effects</span></label>
+    }
+
+    <details class="quality-settings">
+      <summary>Optional tool, station &amp; skill quality estimates</summary>
+      <p>Approximate quality and duration only; in-game results may differ. These settings do not affect strength or intoxication.</p>
+      <label class="quality-toggle"><input type="checkbox" [(ngModel)]="estimateQuality" [ngModelOptions]="{standalone: true}" (ngModelChange)="invalidateResults()"><span>Include quality and duration estimates</span></label>
+      @if (estimateQuality) {
+        <div class="quality-grid">
+          <label><span>Alchemy skill (0–100)</span><input type="number" min="0" max="100" step="1" [(ngModel)]="quality.alchemySkill" [ngModelOptions]="{standalone: true}" (ngModelChange)="invalidateResults()"></label>
+          <label><span>Alchemy table quality</span><input type="number" min="1" max="100" step="1" [(ngModel)]="quality.tableQuality" [ngModelOptions]="{standalone: true}" (ngModelChange)="invalidateResults()"></label>
+          <label><span>Mortar type</span><select [ngModel]="quality.mortarType" [ngModelOptions]="{standalone: true}" (ngModelChange)="setMortarType($event)"><option value="stone">Stone</option><option value="granite">Granite</option><option value="marble">Marble</option></select></label>
+          <label><span>Mortar quality</span><input type="number" min="1" max="100" step="1" [(ngModel)]="quality.mortarQuality" [ngModelOptions]="{standalone: true}" (ngModelChange)="invalidateResults()"></label>
+          <label><span>Pot quality</span><input type="number" min="1" max="100" step="1" [(ngModel)]="quality.potQuality" [ngModelOptions]="{standalone: true}" (ngModelChange)="invalidateResults()"></label>
+          <label><span>Still quality</span><input type="number" min="1" max="100" step="1" [(ngModel)]="quality.stillQuality" [ngModelOptions]="{standalone: true}" (ngModelChange)="invalidateResults()"></label>
+          <label><span>Water quality</span><input type="number" min="1" max="100" step="1" [(ngModel)]="quality.waterQuality" [ngModelOptions]="{standalone: true}" (ngModelChange)="invalidateResults()"></label>
+        </div>
+        <p>Unconfigured herb quality defaults to 50.</p>
+      }
+    </details>
+
+    @if (searchErrors.length) {
+      <ul class="estimate-errors" role="alert">@for (error of searchErrors; track error) { <li>{{ error }}</li> }</ul>
+    }
+
+    @if (isSearching) {
+      <p class="search-status" role="status" aria-live="polite">Calculating potion estimates…</p>
+    }
+
+    @if (candidates; as matches) {
+      <section class="search-results" aria-live="polite" aria-labelledby="results-title">
+        <h2 id="results-title">{{ matches.length }} matching combination{{ matches.length === 1 ? '' : 's' }}</h2>
+        <div class="candidate-grid">
+          @for (candidate of displayedCandidates; track $index) {
+            <article class="candidate-card">
+              <h3 class="candidate-ingredients">
+                @for (ingredient of candidate.ingredients; track ingredient.herbId) {
+                  <span>{{ herbName(ingredient.herbId) }} — {{ ingredient.amountKg.toFixed(2) }} kg</span>
+                }
+              </h3>
+              <div class="comparison-scroll" role="region" tabindex="0" aria-label="Potion concentration comparison">
+                <table class="product-comparison">
+                  <caption>1.20 L available after distillation</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Estimate for a 1 L dose</th>
+                      <th scope="col">Herbal Brew (100%)</th>
+                      <th scope="col">Distillate (133%)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (effect of candidate.effects; track effect.effectId) {
+                      <tr [class.desired-effect]="selectedEffectIds.includes(effect.effectId)">
+                        <th scope="row" [attr.title]="effectDescription(effect.effectId)">{{ effectName(effect.effectId) }}</th>
+                        <td>{{ formatEffectMagnitude(candidate.decoction, effect.effectId) }}</td>
+                        <td>{{ formatEffectMagnitude(candidate.distillate, effect.effectId) }}</td>
+                      </tr>
+                    }
+                    <tr class="intoxication-row">
+                      <th scope="row">Intoxication</th>
+                      <td>{{ formatIntoxication(candidate.decoction.intoxication.min, candidate.decoction.intoxication.max) }}</td>
+                      <td>{{ formatIntoxication(candidate.distillate.intoxication.min, candidate.distillate.intoxication.max) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              @if (candidate.quality; as qualityResult) {
+                <section class="quality-results">
+                  <h4>Estimated quality and duration</h4>
+                  <p>Mixture {{ qualityResult.mixtureQuality }} · decoction {{ qualityResult.decoctionQuality }} · distillate {{ qualityResult.distillateQuality }}</p>
+                  <div class="candidate-effect"><span>Duration multiplier</span><span>Decoction {{ formatMultiplier(qualityResult.decoctionDurationMultiplier) }} · distillate {{ formatMultiplier(qualityResult.distillateDurationMultiplier) }}</span></div>
+                  <p>Base effect durations are unknown.</p>
+                </section>
+              }
+            </article>
+          }
+        </div>
+        <p class="estimate-warnings">Strength and intoxication are estimates.</p>
+      </section>
+    }
+  </section>
+</section>

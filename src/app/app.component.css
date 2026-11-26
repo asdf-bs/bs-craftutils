@@ -36,12 +36,17 @@ input::placeholder { color: var(--muted); opacity: 1; }
 .modal { background: var(--surface-raised); color: var(--text); border: 1px solid var(--border); }
 .form-error { color: var(--danger); }
 .theme-picker { width: auto; max-width: 100%; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 5px; padding: 10px 12px; }
-button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid #000; outline-offset: 2px; box-shadow: 0 0 0 2px #fff; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; box-shadow: 0 0 0 2px var(--surface); }
 .recipe-grid { grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); }
 .recipe-card { position: relative; }
 .recipe-card-edit { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: inherit; background: transparent; cursor: pointer; }
 .recipe-card:hover { border-color: var(--accent); }
 .recipe-card .delete-button { position: relative; }
+.app-shell { display: flex; align-items: stretch; }
+.main-content { flex: 1 1 auto; min-width: 0; padding-top: 32px; }
+.sidebar { flex: 0 0 235px; }
+@media (max-width: 800px) { .sidebar { flex-basis: 76px; } }
+@media (max-width: 520px) { .sidebar { flex-basis: 55px; } }
 .effect-filter { width: 210px; }
 .effect-filter-label { display: block; font-size: 9px; letter-spacing: 1px; font-weight: 700; color: var(--muted); margin-bottom: 9px; }
 .effect-filter details { position: relative; }
@@ -80,7 +85,9 @@ button, select, .effect-filter summary { min-height: 44px; }
   .amount-input { flex: 1; min-width: 0; }
 }
 @media (forced-colors: active) {
-  button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible, .effect-filter summary:focus-visible { outline: 3px solid Highlight; box-shadow: none; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible, .effect-filter summary:focus-visible { outline: 3px solid Highlight; box-shadow: none; }
   .modal, .effect-options, .recipe-card, .summary-row { border: 1px solid CanvasText; }
   .primary-button, .outline-button, .reset-button, .delete-button, .close-button, .remove-button, .cancel-button, .clear-filter, .add-row { border: 1px solid ButtonText; }
 }
+.skip-link { position: fixed; top: 8px; left: 8px; z-index: 20; padding: 10px 14px; color: var(--text); background: var(--surface-raised); border: 2px solid var(--border); transform: translateY(calc(-100% - 12px)); }
+.skip-link:focus-visible { transform: translateY(0); }
